@@ -5,12 +5,12 @@ import numpy as np
 
 
 sentiment_mapping = {
-    0: "sadness",      # textes exprimant fatigue, espoir/désespoir, fardeau
-    1: "joy",          # textes exprimant satisfaction, amusement, contentement
-    2: "love", # textes exprimant nostalgie, romance, réflexion intime
-    3: "anger", # textes exprimant irritation, mécontentement, frustration
-    4: "fear", # textes exprimant confusion, surcharge émotionnelle, scepticisme
-    5: "surprise", # textes exprimant surprise, émerveillement, humour, enthousiasme
+    0: "sadness",      
+    1: "joy",          
+    2: "love", 
+    3: "anger", 
+    4: "fear", 
+    5: "surprise", 
 }
 
 
