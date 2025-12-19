@@ -4,9 +4,9 @@ from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
 sentiment_mapping = {
-    0: "positive",      
-    1: "neutral",          
-    2: "negative", 
+    0: "Bearish",      
+    1: "Bullish",          
+    2: "Neutral", 
 }
 
 # Charger la configuration
@@ -32,38 +32,41 @@ model.compile(optimizer="adam", loss="categorical_crossentropy", metrics=["accur
 # Charger les poids
 model.load_weights(r"LLMSEM/models/transformers_weights.weights.h5")
 
+
 test_texts = [
+    # Articles crypto simulés
+
     # Niveau 1 : clair et direct
-    "The stock market is performing exceptionally well today!",
-    "I am furious about these massive losses.",
-    "I am terrified of this market crash.",
-    "The portfolio decline makes me feel devastated.",
-    "What a shocking market reversal!",
-    "I love investing in dividend stocks.",
-    
+    "Bitcoin surges past $60,000 as investors rush back into crypto.",
+    "Ethereum suffers a minor dip following regulatory news.",
+    "Dogecoin rallies as social media hype intensifies.",
+    "Litecoin value remains stable amid market calm.",
+    "Crypto market shows strong gains across altcoins.",
+    "Solana continues its upward trend, hitting new highs.",
+
     # Niveau 2 : phrases un peu nuancées
-    "I can't believe how profitable this trade was.",
-    "The company earnings disappointed investors significantly.",
-    "Holding this volatile stock makes me nervous.",
-    "Missing that buying opportunity makes me regretful.",
-    "I didn't expect the Fed to raise rates!",
-    "I really trust this investment strategy.",
-    
+    "Investors are cautiously optimistic about Cardano's new update.",
+    "The market reacted negatively to news of a hack on a DeFi platform.",
+    "Shiba Inu holders feel anxious as volatility spikes.",
+    "Traders regret missing the early surge in Avalanche tokens.",
+    "Binance Coin price unexpectedly rises despite bearish sentiment.",
+    "Polkadot continues steady growth, boosting investor confidence.",
+
     # Niveau 3 : expressions idiomatiques et sarcasme
-    "Oh great, another market correction… just what my portfolio needed.",
-    "The stock price is going to the moon with this news.",
-    "My heart sank when the earnings report came out.",
-    "The company went bankrupt, and I'm not even surprised.",
-    "Well, that merger was unexpected!",
-    "Nothing beats a strong bull market rally.",
-    
+    "Oh great, another NFT craze… exactly what the market needed.",
+    "Bitcoin is mooning again, apparently gravity doesn't apply here.",
+    "My portfolio tanked when the altcoins crashed overnight.",
+    "Ethereum gas fees skyrocketed, and shockingly, I'm not surprised.",
+    "Well, another rug pull… investors must love surprises!",
+    "Nothing beats a bullish DeFi rally, until it collapses tomorrow.",
+
     # Niveau 4 : phrases ambiguës ou multiples émotions
-    "I am excited but also cautious about this IPO.",
-    "I love this sector, but the volatility frustrates me.",
-    "I fear a recession but hope for recovery.",
-    "I am disappointed yet relieved to exit that position.",
-    "The surprise profit warning made me anxious yet curious.",
-    "As of writing, data from TradingView showed that 75 of the top 100 coins by market value traded below both their 50-day and 200-day simple moving averages (SMAs), indicating across-the-board weakness in the digital asset market. "
+    "I am thrilled about this Bitcoin surge but wary of a sudden correction.",
+    "Ethereum's upgrade excites me, yet the price volatility worries me.",
+    "Crypto adoption grows, but regulatory uncertainty looms.",
+    "I'm happy with my NFT gains yet concerned about market speculation.",
+    "The sudden spike in meme coins made me anxious yet curious.",
+    "TradingView shows most top coins under 50- and 200-day SMAs, signaling broad market weakness, though some assets still outperform."
 ]
 
 for text in test_texts:

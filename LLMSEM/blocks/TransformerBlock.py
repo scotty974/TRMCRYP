@@ -2,7 +2,7 @@ import tensorflow as tf
 from tensorflow.keras.layers import MultiHeadAttention, LayerNormalization
 
 class TransformerBlock(tf.keras.layers.Layer):
-    def __init__(self, embed_size, num_heads, ff_dim, rate=0.1):
+    def __init__(self, embed_size, num_heads, ff_dim, rate=0.4):
         super().__init__()
         self.attn = MultiHeadAttention(num_heads=num_heads, key_dim=embed_size)
         self.ffn = tf.keras.Sequential([

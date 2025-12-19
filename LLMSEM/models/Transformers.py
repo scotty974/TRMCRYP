@@ -2,14 +2,14 @@ import tensorflow as tf
 from tensorflow.keras.layers import Embedding
 from blocks.TransformerBlock import TransformerBlock
 
-max_len = 200
+max_len = 150
 class Transformers(tf.keras.Model):
-    def __init__(self, vocab_size, embed_size, num_heads, ff_dim, rate=0.1):
+    def __init__(self, vocab_size, embed_size, num_heads, ff_dim, rate=0.4):
         super(Transformers, self).__init__()
         self.embedding = Embedding(vocab_size, embed_size)
         self.pos_emb = Embedding(max_len, embed_size) 
         self.trans_bock = TransformerBlock(embed_size, num_heads, ff_dim, rate)
-        self.final_layer = tf.keras.layers.Dense(3, activation="sigmoid")
+        self.final_layer = tf.keras.layers.Dense(3, activation="softmax")
     
     def call(self, inputs, training=False):
         x = self.embedding(inputs)

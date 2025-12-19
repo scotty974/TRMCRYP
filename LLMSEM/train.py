@@ -11,12 +11,12 @@ import pickle
 from sklearn.utils.class_weight import compute_class_weight
 from sklearn.model_selection import train_test_split
 
-VOCAB_SIZE = 10000
+VOCAB_SIZE = 5000
 EMBED_DIM = 128
 NUM_HEADS = 6
 FF_DIM = 512
-BATCH_SIZE = 32
-MAX_LEN = 200
+BATCH_SIZE = 64
+MAX_LEN = 150
 NUM_CLASSES = 3
 
 # Découpage train / val / test
@@ -64,6 +64,21 @@ precision_macro = tf.keras.metrics.Precision(name="precision_macro")
 recall_macro = tf.keras.metrics.Recall(name="recall_macro")
 f1_macro = tf.keras.metrics.F1Score(name="f1_macro")
 
+early_stopping = tf.keras.callbacks.EarlyStopping(
+    monitor='val_loss',
+    patience=5,
+    restore_best_weights=True,
+    verbose=1
+)
+
+reduce_lr = tf.keras.callbacks.ReduceLROnPlateau(
+    monitor='val_loss',
+    factor=0.5,
+    patience=3,
+    min_lr=0.00001,
+    verbose=1
+)
+
 model.compile(
     optimizer="adam",
     loss="categorical_crossentropy",
@@ -77,7 +92,8 @@ history = model.fit(
     batch_size=BATCH_SIZE,
     epochs=10,
     validation_data=(X_val, y_val),
-    class_weight=class_weight
+    class_weight=class_weight,
+    callbacks=[early_stopping, reduce_lr]
 )
 
 # Prédictions
