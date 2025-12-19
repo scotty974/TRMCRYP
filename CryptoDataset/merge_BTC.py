@@ -38,7 +38,7 @@ def merge_btc_data():
     base_dir = os.path.dirname(os.path.abspath(__file__))
     
     # Fichiers à fusionner (2021-2024, excluant 2025 pour validation)
-    years = [2021, 2022, 2023, 2024]
+    years = [2021, 2022, 2023, 2024, 2025]
     dataframes = []
     
     print("=" * 50)
@@ -75,9 +75,9 @@ def merge_btc_data():
         print(f"✓ {initial_len - len(merged_df)} doublons supprimés")
     
     # Sauvegarde
-    output_path = os.path.join(base_dir, "BTC_merged_2021_2024.parquet")
+    output_path = os.path.join(base_dir, f"BTC_merged_{years[0]}_{years[-1]}.parquet")
     merged_df.to_parquet(output_path, index=False)
-    print(f"\n✓ Fichier sauvegardé : BTC_merged_2021_2024.parquet")
+    print(f"\n✓ Fichier sauvegardé : {output_path}")
     print(f"  Taille finale : {len(merged_df):,} lignes")
     
     # Afficher les colonnes
