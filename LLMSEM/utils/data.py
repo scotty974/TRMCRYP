@@ -1,39 +1,30 @@
-import pandas as pd
+from datasets import load_dataset
 import re
+import matplotlib.pyplot as plt
 
-splits = {'train': 'split/train-00000-of-00001.parquet', 'validation': 'split/validation-00000-of-00001.parquet', 'test': 'split/test-00000-of-00001.parquet'}
-train_df = pd.read_parquet("hf://datasets/dair-ai/emotion/" + splits["train"])
-validation_df = pd.read_parquet("hf://datasets/dair-ai/emotion/" + splits["validation"])
-test_df = pd.read_parquet("hf://datasets/dair-ai/emotion/" + splits["test"])
 
-def clean_text(text):
-    text = re.sub(r'https?://\S+', '', text)  # supprime les URLs
-    text = re.sub(r'#\w+', '', text)          # supprime les hashtags
-    text = re.sub(r'@\w+', '', text)          # supprime les mentions
-    text = re.sub(r'[^A-Za-zÀ-ÖØ-öø-ÿ\s]', ' ', text)  # supprime les caractères spéciaux
-    text = re.sub(r'\s+', ' ', text)          # remplace les multiples espaces par un seul
-    return text.strip().lower()                # enlève les espaces en début/fin et met en minuscule
+ds = load_dataset("zeroshot/twitter-financial-news-sentiment")
 
-train_df['text'] = train_df['text'].apply(clean_text)
-validation_df['text'] = validation_df['text'].apply(clean_text)
-test_df['text'] = test_df['text'].apply(clean_text)
+def clean_text(example):
+    text = example["text"]
+    text = re.sub(r'https?://\S+', '', text)
+    text = re.sub(r'#\w+', '', text)
+    text = re.sub(r'@\w+', '', text)
+    text = re.sub(r'[^A-Za-zÀ-ÖØ-öø-ÿ\s]', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    example["text"] = text.strip().lower()
+    return example
 
-print("Data Cleaned")
+train_df = ds["train"].map(clean_text)
+validation_df = ds["validation"].map(clean_text)
 
-label_mapping = {}  # dictionnaire pour associer label → texte exemple
-for label in sorted(train_df['label'].unique()):
-    example_text = train_df[train_df['label'] == label]['text'].iloc[0]
-    print(f"\nLabel {label}: {example_text}")
-    label_mapping[label] = example_text
+# conversion en Pandas pour CSV
+train_df.to_pandas().to_csv(r"LLMSEM\data\train_df.csv", index=False)
+validation_df.to_pandas().to_csv(r"LLMSEM\data\validation_df.csv", index=False)
 
-# Afficher le mapping final
-print("\nMapping des labels avec exemple de texte:")
-for label, text in label_mapping.items():
-    print(f"{label} → {text}")
 
-for label in sorted(train_df['label'].unique()):
-    print(f"\nLabel {label}:")
-    texts = train_df[train_df['label'] == label]['text'].head(5)  # afficher 5 exemples
-    for t in texts:
-        print("-", t)
-
+# distribution des sentiments
+train_df.to_pandas().groupby("label").size().plot(kind="bar")
+validation_df.to_pandas().groupby("label").size().plot(kind="bar")
+plt.savefig(r"LLMSEM\results\distribution_sentiments.png")
+plt.show()

@@ -3,18 +3,11 @@ from models.Transformers import Transformers
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 import numpy as np
 
-
 sentiment_mapping = {
-    0: "sadness",      
-    1: "joy",          
-    2: "love", 
-    3: "anger", 
-    4: "fear", 
-    5: "surprise", 
+    0: "positive",      
+    1: "neutral",          
+    2: "negative", 
 }
-
-
-
 
 # Charger la configuration
 with open(r"LLMSEM/models/model_config.pkl", "rb") as f:
@@ -41,36 +34,36 @@ model.load_weights(r"LLMSEM/models/transformers_weights.weights.h5")
 
 test_texts = [
     # Niveau 1 : clair et direct
-    "I am very happy today!",
-    "I feel so angry about this.",
-    "I am terrified of the dark.",
-    "I feel so sad and lonely.",
-    "What a surprising turn of events!",
-    "I love spending time with my family.",
-
+    "The stock market is performing exceptionally well today!",
+    "I am furious about these massive losses.",
+    "I am terrified of this market crash.",
+    "The portfolio decline makes me feel devastated.",
+    "What a shocking market reversal!",
+    "I love investing in dividend stocks.",
+    
     # Niveau 2 : phrases un peu nuancées
-    "I can't believe how lucky I am.",
-    "He disappointed me so much.",
-    "Walking alone at night makes me nervous.",
-    "Missing her makes me feel down.",
-    "I didn't expect that to happen!",
-    "I really care about my friends.",
-
+    "I can't believe how profitable this trade was.",
+    "The company earnings disappointed investors significantly.",
+    "Holding this volatile stock makes me nervous.",
+    "Missing that buying opportunity makes me regretful.",
+    "I didn't expect the Fed to raise rates!",
+    "I really trust this investment strategy.",
+    
     # Niveau 3 : expressions idiomatiques et sarcasme
-    "Oh great, another rainy day… just what I needed.",
-    "I am on cloud nine with this news.",
-    "My heart sank when I heard the truth.",
-    "She left me, and I’m not even surprised.",
-    "Well, that was unexpected!",
-    "Nothing beats a warm hug from a loved one.",
-
+    "Oh great, another market correction… just what my portfolio needed.",
+    "The stock price is going to the moon with this news.",
+    "My heart sank when the earnings report came out.",
+    "The company went bankrupt, and I'm not even surprised.",
+    "Well, that merger was unexpected!",
+    "Nothing beats a strong bull market rally.",
+    
     # Niveau 4 : phrases ambiguës ou multiples émotions
-    "I am happy but also a little nervous about tomorrow.",
-    "I love her, but she makes me so frustrated.",
-    "I fear the worst but hope for the best.",
-    "I am sad and relieved at the same time.",
-    "The surprise party made me anxious yet thrilled.",
-    "I love this movie, though some parts were sad."
+    "I am excited but also cautious about this IPO.",
+    "I love this sector, but the volatility frustrates me.",
+    "I fear a recession but hope for recovery.",
+    "I am disappointed yet relieved to exit that position.",
+    "The surprise profit warning made me anxious yet curious.",
+    "As of writing, data from TradingView showed that 75 of the top 100 coins by market value traded below both their 50-day and 200-day simple moving averages (SMAs), indicating across-the-board weakness in the digital asset market. "
 ]
 
 for text in test_texts:
@@ -79,8 +72,7 @@ for text in test_texts:
     prediction = model.predict(padded)
     predicted_index = np.argmax(prediction, axis=-1)[0]
     predicted_sentiment = sentiment_mapping[predicted_index]
+    
     print(f"Text: {text}")
     print(f"Predicted Sentiment: {predicted_sentiment}")
     print(f"All Scores: {np.round(prediction[0], 2)}\n")
-
-

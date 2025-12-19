@@ -9,7 +9,7 @@ class Transformers(tf.keras.Model):
         self.embedding = Embedding(vocab_size, embed_size)
         self.pos_emb = Embedding(max_len, embed_size) 
         self.trans_bock = TransformerBlock(embed_size, num_heads, ff_dim, rate)
-        self.final_layer = tf.keras.layers.Dense(6, activation="sigmoid")
+        self.final_layer = tf.keras.layers.Dense(3, activation="sigmoid")
     
     def call(self, inputs, training=False):
         x = self.embedding(inputs)
