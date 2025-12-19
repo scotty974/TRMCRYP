@@ -15,16 +15,14 @@ def clean_text(example):
     example["text"] = text.strip().lower()
     return example
 
-train_df = ds["train"].map(clean_text)
-validation_df = ds["validation"].map(clean_text)
+train_df = ds["train"].map(clean_text).to_pandas()
+validation_df = ds["validation"].map(clean_text).to_pandas()
 
-# conversion en Pandas pour CSV
-train_df.to_pandas().to_csv(r"LLMSEM\data\train_df.csv", index=False)
-validation_df.to_pandas().to_csv(r"LLMSEM\data\validation_df.csv", index=False)
+# Distribution des sentiments
+train_df.groupby("label").size().plot(kind="bar")
+plt.savefig(r"LLMSEM\results\train_distribution.png")
+plt.show()
 
-
-# distribution des sentiments
-train_df.to_pandas().groupby("label").size().plot(kind="bar")
-validation_df.to_pandas().groupby("label").size().plot(kind="bar")
-plt.savefig(r"LLMSEM\results\distribution_sentiments.png")
+validation_df.groupby("label").size().plot(kind="bar")
+plt.savefig(r"LLMSEM\results\val_distribution.png")
 plt.show()
