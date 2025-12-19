@@ -1,0 +1,5 @@
+CryptoDataset/*.parquet
+Finance/__pycache__/
+uv.lock
+.python-version
+.venv/
