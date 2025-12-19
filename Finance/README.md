@@ -73,6 +73,26 @@ from Finance.Fibonacci import add_fibonacci_levels
 df = add_fibonacci_levels(df, price_col="Close", window=None, add_distance=True)
 ```
 
+## Configuration des Fenêtres Temporelles
+
+⚠️ **Important** : Pour des données à intervalle de **1 minute**, les fenêtres classiques (20/50/200) sont **trop courtes** !
+
+Le module propose des **presets adaptés** selon votre stratégie de trading :
+
+| Preset | Description | Fenêtres MMS/ECT | Bollinger | Usage |
+|--------|-------------|------------------|-----------|-------|
+| **multi** ⭐ | Multi-timeframe (PAR DÉFAUT) | 1h, 1j, 1sem | 1 jour | Vue complète recommandée |
+| **short** | Court terme | 30min, 1h, 4h | 1 heure | Scalping, daytrading |
+| **medium** | Moyen terme | 1j, 5j, 10j | 1 jour | Swing trading |
+| **long** | Long terme | 1sem, 1mois, 2mois | 1 semaine | Position trading |
+| **classic** | Classique 20/50/200 | 20, 50, 200 min | 20 min | ⚠️ NON recommandé pour 1m |
+
+### Liste des presets disponibles
+
+```bash
+python Finance/app.py --list-presets
+```
+
 ## Utilisation
 
 ### 1. Script orchestrateur `app.py`
@@ -80,13 +100,17 @@ df = add_fibonacci_levels(df, price_col="Close", window=None, add_distance=True)
 Pour enrichir un fichier parquet avec tous les indicateurs d'Aymeric :
 
 ```bash
+# Utiliser le preset par défaut (multi-timeframe)
 python Finance/app.py CryptoDataset/SOL2021.parquet
-```
 
-Ou spécifier le fichier de sortie :
+# Spécifier un preset
+python Finance/app.py CryptoDataset/SOL2021.parquet output.parquet medium
 
-```bash
-python Finance/app.py CryptoDataset/SOL2021.parquet CryptoDataset/SOL2021_enhanced.parquet
+# Court terme pour daytrading
+python Finance/app.py CryptoDataset/SOL2021.parquet output.parquet short
+
+# Long terme pour position trading
+python Finance/app.py CryptoDataset/SOL2021.parquet output.parquet long
 ```
 
 ### 2. Script de test avec visualisations `test_indicators.py`
@@ -94,19 +118,52 @@ python Finance/app.py CryptoDataset/SOL2021.parquet CryptoDataset/SOL2021_enhanc
 Pour tester tous les indicateurs et générer des visualisations :
 
 ```bash
+# Utiliser le preset par défaut (multi-timeframe)
 python Finance/test_indicators.py
+
+# Utiliser un preset spécifique
+python Finance/test_indicators.py short
+python Finance/test_indicators.py medium
+python Finance/test_indicators.py long
 ```
 
 Ce script :
-- Charge automatiquement `CryptoDataset/SOL2021.parquet`
-- Applique tous les indicateurs
-- Génère 6 graphiques de visualisation
+- Charge automatiquement `CryptoDataset/SOL_merged_2021_2024.parquet` (ou SOL2021.parquet en fallback)
+- Applique tous les indicateurs avec le preset choisi
+- Adapte la taille de l'échantillon au timeframe (3j pour short, 30j pour medium, 70j pour long)
+- Génère 6 graphiques de visualisation avec les bonnes étiquettes
 - Sauvegarde les graphiques dans `Finance/indicators_visualization.png`
 - Affiche les graphiques à l'écran
 
 ### 3. Utilisation modulaire
 
-Chaque indicateur peut être utilisé individuellement :
+#### Avec presets (recommandé)
+
+```python
+import pandas as pd
+from Finance import add_mms, add_tendance, add_ecart_type, add_bollinger, add_fibonacci_levels
+from Finance.config import get_preset
+
+# Charger les données
+df = pd.read_parquet("CryptoDataset/SOL2021.parquet")
+
+# Charger un preset
+config = get_preset('multi')  # ou 'short', 'medium', 'long'
+
+# Ajouter les indicateurs avec les bonnes fenêtres
+df = add_mms(df, windows=config['mms_windows'])
+df = add_tendance(df, mms_short=config['mms_windows'][0], 
+                     mms_medium=config['mms_windows'][1],
+                     mms_long=config['mms_windows'][2])
+df = add_ecart_type(df, windows=config['ect_windows'])
+df = add_bollinger(df, window=config['bollinger_window'])
+df = add_fibonacci_levels(df, window=config['fibonacci_window'])
+
+# Sauvegarder
+df.to_parquet("output_enhanced.parquet", index=False)
+```
+
+#### Utilisation manuelle (fenêtres personnalisées)
 
 ```python
 import pandas as pd
@@ -115,11 +172,14 @@ from Finance import add_mms, add_tendance, add_ecart_type, add_bollinger, add_fi
 # Charger les données
 df = pd.read_parquet("CryptoDataset/SOL2021.parquet")
 
-# Ajouter les indicateurs un par un
-df = add_mms(df, windows=[20, 50, 200])
-df = add_tendance(df)
-df = add_ecart_type(df, windows=[20, 50, 200])
-df = add_bollinger(df, window=20)
+# Définir vos propres fenêtres (en minutes pour données 1m)
+custom_windows = [120, 480, 2880]  # 2h, 8h, 2j
+
+# Ajouter les indicateurs
+df = add_mms(df, windows=custom_windows)
+df = add_tendance(df, mms_short=120, mms_medium=480, mms_long=2880)
+df = add_ecart_type(df, windows=custom_windows)
+df = add_bollinger(df, window=480)
 df = add_fibonacci_levels(df)
 
 # Sauvegarder
@@ -131,12 +191,13 @@ df.to_parquet("output_enhanced.parquet", index=False)
 ```
 Finance/
 ├── __init__.py           # Package principal
+├── config.py            # Configuration des presets de fenêtres temporelles
 ├── MMS.py               # Moyennes mobiles simples
 ├── Tendance.py          # Analyse de tendance
 ├── ECT.py               # Écart-type (volatilité)
 ├── Bollinger.py         # Bandes de Bollinger
 ├── Fibonacci.py         # Retracements de Fibonacci
-├── app.py               # Script orchestrateur
+├── app.py               # Script orchestrateur avec presets
 ├── test_indicators.py   # Tests avec visualisations
 └── README.md            # Cette documentation
 ```
@@ -150,10 +211,19 @@ Finance/
 
 ## Paramètres par défaut
 
-- **Fenêtres MMS/ECT** : 20, 50, 200 périodes (configuration classique)
-- **Fenêtre Bollinger** : 20 périodes, 2 écarts-types
-- **Fibonacci** : Calcul global sur toute la série (peut être fenêtré)
+- **Preset** : `multi` (multi-timeframe : 1h, 1j, 1sem)
+- **Fenêtres Bollinger** : 1 jour, 2 écarts-types
+- **Fibonacci** : Calcul global sur toute la série
 - **Colonne prix** : `Close`
+
+### Conversion minutes → temps lisible
+
+Pour référence (données 1m) :
+- **1 heure** = 60 minutes
+- **1 jour** = 1440 minutes  
+- **1 semaine** = 10080 minutes
+- **1 mois** (~30j) = 43200 minutes
+- **2 mois** (~60j) = 86400 minutes
 
 ## Notes techniques
 

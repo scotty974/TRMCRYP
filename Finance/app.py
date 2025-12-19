@@ -3,6 +3,12 @@ Script orchestrateur pour enrichir un dataframe avec tous les indicateurs d'Ayme
 
 Ce script charge un fichier parquet, applique séquentiellement tous les indicateurs
 (MMS, Tendance, ECT, Bollinger, Fibonacci), puis sauvegarde le résultat enrichi.
+
+Pour des données à intervalle de 1 minute, utilisez les presets adaptés :
+- 'short' : scalping/daytrading (30min, 1h, 4h)
+- 'medium' : swing trading (1j, 5j, 10j)
+- 'long' : position trading (1sem, 1mois, 2mois)
+- 'multi' : multi-timeframe (1h, 1j, 1sem) [PAR DÉFAUT]
 """
 
 import pandas as pd
@@ -13,14 +19,16 @@ from Finance.Tendance import add_tendance
 from Finance.ECT import add_ecart_type
 from Finance.Bollinger import add_bollinger
 from Finance.Fibonacci import add_fibonacci_levels
+from Finance.config import get_preset, list_presets, minutes_to_human
 
 
 def enrich_dataframe(
     df: pd.DataFrame,
     price_col: str = "Close",
-    mms_windows: list = [20, 50, 200],
-    ect_windows: list = [20, 50, 200],
-    bollinger_window: int = 20,
+    preset: str = 'multi',
+    mms_windows: list = None,
+    ect_windows: list = None,
+    bollinger_window: int = None,
     bollinger_n_std: float = 2.0,
     fibonacci_window: int = None
 ) -> pd.DataFrame:
@@ -30,16 +38,33 @@ def enrich_dataframe(
     Args:
         df: DataFrame à enrichir
         price_col: Colonne de prix à utiliser
-        mms_windows: Fenêtres pour les moyennes mobiles simples
-        ect_windows: Fenêtres pour les écarts-types
-        bollinger_window: Fenêtre pour les bandes de Bollinger
+        preset: Preset de fenêtres ('short', 'medium', 'long', 'multi', 'classic')
+        mms_windows: Fenêtres pour les MMS (override preset si fourni)
+        ect_windows: Fenêtres pour les écarts-types (override preset si fourni)
+        bollinger_window: Fenêtre pour Bollinger (override preset si fourni)
         bollinger_n_std: Nombre d'écarts-types pour Bollinger
-        fibonacci_window: Fenêtre pour Fibonacci (None = global)
+        fibonacci_window: Fenêtre pour Fibonacci (override preset si fourni)
     
     Returns:
         DataFrame enrichi avec tous les indicateurs
     """
+    # Charger le preset
+    config = get_preset(preset)
+    
+    # Override avec les paramètres fournis
+    if mms_windows is None:
+        mms_windows = config['mms_windows']
+    if ect_windows is None:
+        ect_windows = config['ect_windows']
+    if bollinger_window is None:
+        bollinger_window = config['bollinger_window']
+    if fibonacci_window is None:
+        fibonacci_window = config['fibonacci_window']
+    
     print(f"Enrichissement du dataframe ({len(df)} lignes)...")
+    print(f"  Preset: {preset} - {config['description']}")
+    windows_str = [minutes_to_human(w) for w in mms_windows]
+    print(f"  Fenêtres MMS: {windows_str}")
     
     # 1. Ajouter les moyennes mobiles simples
     print("  → Ajout des MMS...")
@@ -72,6 +97,7 @@ def process_parquet(
     input_path: str,
     output_path: str = None,
     price_col: str = "Close",
+    preset: str = 'multi',
     **kwargs
 ) -> pd.DataFrame:
     """
@@ -81,6 +107,7 @@ def process_parquet(
         input_path: Chemin vers le fichier parquet d'entrée
         output_path: Chemin vers le fichier parquet de sortie (optionnel)
         price_col: Colonne de prix à utiliser
+        preset: Preset de fenêtres temporelles ('short', 'medium', 'long', 'multi', 'classic')
         **kwargs: Paramètres supplémentaires pour enrich_dataframe
     
     Returns:
@@ -94,7 +121,7 @@ def process_parquet(
     print(f"  → {len(df)} lignes, {len(df.columns)} colonnes")
     
     # Enrichir le dataframe
-    df = enrich_dataframe(df, price_col=price_col, **kwargs)
+    df = enrich_dataframe(df, price_col=price_col, preset=preset, **kwargs)
     
     # Déterminer le chemin de sortie si non spécifié
     if output_path is None:
@@ -113,17 +140,26 @@ def process_parquet(
 def main():
     """Point d'entrée principal du script."""
     if len(sys.argv) < 2:
-        print("Usage: python app.py <input_parquet> [output_parquet]")
-        print("\nExemple:")
+        print("Usage: python app.py <input_parquet> [output_parquet] [preset]")
+        print("\nExemples:")
         print("  python app.py ../CryptoDataset/SOL2021.parquet")
-        print("  python app.py ../CryptoDataset/SOL2021.parquet ../CryptoDataset/SOL2021_enhanced.parquet")
+        print("  python app.py ../CryptoDataset/SOL2021.parquet output.parquet")
+        print("  python app.py ../CryptoDataset/SOL2021.parquet output.parquet medium")
+        print("\nOptions spéciales:")
+        print("  python app.py --list-presets    # Afficher tous les presets disponibles")
         sys.exit(1)
+    
+    # Option pour lister les presets
+    if sys.argv[1] == '--list-presets':
+        list_presets()
+        sys.exit(0)
     
     input_file = sys.argv[1]
     output_file = sys.argv[2] if len(sys.argv) > 2 else None
+    preset = sys.argv[3] if len(sys.argv) > 3 else 'multi'
     
     try:
-        process_parquet(input_file, output_file)
+        process_parquet(input_file, output_file, preset=preset)
     except Exception as e:
         print(f"\n❌ Erreur: {e}")
         import traceback

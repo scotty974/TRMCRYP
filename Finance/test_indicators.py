@@ -17,13 +17,19 @@ from Finance.Tendance import add_tendance
 from Finance.ECT import add_ecart_type
 from Finance.Bollinger import add_bollinger
 from Finance.Fibonacci import add_fibonacci_levels
+from Finance.config import get_preset, minutes_to_human
 
 
-def test_indicators():
-    """Teste tous les indicateurs sur les données réelles SOL2021."""
-    print("=" * 60)
+def test_indicators(preset: str = 'multi'):
+    """Teste tous les indicateurs sur les données réelles SOL avec un preset donné."""
+    print("=" * 70)
     print("TEST DES INDICATEURS FINANCIERS D'AYMERIC")
-    print("=" * 60)
+    print("=" * 70)
+    
+    # Charger la configuration du preset
+    config = get_preset(preset)
+    print(f"\n🔧 Preset: {preset}")
+    print(f"   {config['description']}")
     
     # Charger le fichier parquet réel (essayer le fichier fusionné d'abord, sinon SOL2021)
     print("\n1. Chargement des données SOL...")
@@ -46,69 +52,109 @@ def test_indicators():
     df = pd.read_parquet(parquet_path)
     print(f"   ✓ DataFrame chargé: {len(df)} lignes, {len(df.columns)} colonnes")
     
-    # Prendre un échantillon pour la visualisation (derniers 1000 points)
-    sample_size = min(1000, len(df))
+    # Prendre un échantillon pour la visualisation
+    # Pour court terme : 3 jours = 4320 minutes
+    # Pour moyen/long terme : plus de données
+    if preset == 'short':
+        sample_size = min(4320, len(df))  # ~3 jours
+    elif preset == 'medium':
+        sample_size = min(43200, len(df))  # ~30 jours
+    else:
+        sample_size = min(100000, len(df))  # ~70 jours
+    
     df_sample = df.tail(sample_size).copy()
-    print(f"   ✓ Échantillon pour visualisation: {len(df_sample)} lignes")
+    print(f"   ✓ Échantillon pour visualisation: {len(df_sample)} lignes (~{sample_size/1440:.1f} jours)")
     
     # Convertir Open Time en datetime pour les plots
     df_sample['DateTime'] = pd.to_datetime(df_sample['Open Time'], unit='ms')
     print(f"   Colonnes disponibles: {list(df_sample.columns)}")
     
+    # Récupérer les paramètres du preset
+    mms_windows = config['mms_windows']
+    ect_windows = config['ect_windows']
+    bollinger_window = config['bollinger_window']
+    fibonacci_window = config['fibonacci_window']
+    
+    # Afficher les fenêtres en format lisible
+    windows_str = [minutes_to_human(w) for w in mms_windows]
+    print(f"\n   Fenêtres configurées:")
+    print(f"   - MMS/ECT: {windows_str}")
+    print(f"   - Bollinger: {minutes_to_human(bollinger_window)}")
+    print(f"   - Fibonacci: {'Global' if fibonacci_window is None else minutes_to_human(fibonacci_window)}")
+    
     # Test MMS
     print("\n2. Test des moyennes mobiles simples (MMS)...")
-    df_sample = add_mms(df_sample, windows=[20, 50, 200], price_col='Close')
-    print(f"   ✓ Colonnes ajoutées: MMS_20, MMS_50, MMS_200")
+    df_sample = add_mms(df_sample, windows=mms_windows, price_col='Close')
+    cols = ', '.join([f"MMS_{w}" for w in mms_windows])
+    print(f"   ✓ Colonnes ajoutées: {cols}")
     
     # Test Tendance
     print("\n3. Test de l'analyse de tendance...")
-    df_sample = add_tendance(df_sample, mms_short=20, mms_medium=50, mms_long=200, price_col='Close')
+    df_sample = add_tendance(df_sample, mms_short=mms_windows[0], 
+                            mms_medium=mms_windows[1], 
+                            mms_long=mms_windows[2], price_col='Close')
     print(f"   ✓ Colonnes ajoutées: Tendance, Tendance_Code")
     tendance_counts = df_sample['Tendance'].value_counts()
     print(f"   Répartition: {dict(tendance_counts)}")
     
     # Test ECT
     print("\n4. Test de l'écart-type...")
-    df_sample = add_ecart_type(df_sample, windows=[20, 50, 200], price_col='Close')
-    print(f"   ✓ Colonnes ajoutées: ECT_20, ECT_50, ECT_200")
+    df_sample = add_ecart_type(df_sample, windows=ect_windows, price_col='Close')
+    cols = ', '.join([f"ECT_{w}" for w in ect_windows])
+    print(f"   ✓ Colonnes ajoutées: {cols}")
     
     # Test Bollinger
     print("\n5. Test des bandes de Bollinger...")
-    df_sample = add_bollinger(df_sample, window=20, price_col='Close', n_std=2.0, add_position=True)
+    df_sample = add_bollinger(df_sample, window=bollinger_window, price_col='Close', 
+                              n_std=2.0, add_position=True)
     print(f"   ✓ Colonnes ajoutées: Bollinger_Middle, Bollinger_Upper, Bollinger_Lower, Bollinger_Position")
     
     # Test Fibonacci
     print("\n6. Test des niveaux de Fibonacci...")
-    df_sample = add_fibonacci_levels(df_sample, price_col='Close', window=None, add_distance=True)
+    df_sample = add_fibonacci_levels(df_sample, price_col='Close', 
+                                    window=fibonacci_window, add_distance=True)
     print(f"   ✓ Colonnes ajoutées: Fib_0_236, Fib_0_382, Fib_0_5, Fib_0_618, Fib_0_786")
     
     # Résumé final
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 70)
     print("RÉSUMÉ")
-    print("=" * 60)
+    print("=" * 70)
     print(f"DataFrame final: {len(df_sample)} lignes, {len(df_sample.columns)} colonnes")
     
     print("\n✅ Tous les calculs sont terminés avec succès !")
-    return df_sample
+    return df_sample, config
 
 
-def plot_indicators(df):
+def plot_indicators(df, config):
     """Crée des visualisations pour tous les indicateurs."""
-    print("\n" + "=" * 60)
+    print("\n" + "=" * 70)
     print("CRÉATION DES VISUALISATIONS")
-    print("=" * 60)
+    print("=" * 70)
     
     # Configuration de matplotlib
     plt.style.use('seaborn-v0_8-darkgrid')
     fig = plt.figure(figsize=(16, 12))
     
+    # Récupérer les fenêtres du config
+    mms_windows = config['mms_windows']
+    ect_windows = config['ect_windows']
+    bollinger_window = config['bollinger_window']
+    
+    # Trouver dynamiquement les colonnes MMS et ECT
+    mms_cols = [f'MMS_{w}' for w in mms_windows]
+    ect_cols = [f'ECT_{w}' for w in ect_windows]
+    
     # 1. Prix et Moyennes Mobiles Simples
-    print("\n📊 Graphique 1/5: Prix et MMS...")
+    print("\n📊 Graphique 1/6: Prix et MMS...")
     ax1 = plt.subplot(3, 2, 1)
     ax1.plot(df['DateTime'], df['Close'], label='Close', linewidth=1.5, color='black', alpha=0.7)
-    ax1.plot(df['DateTime'], df['MMS_20'], label='MMS 20', linewidth=1, color='blue')
-    ax1.plot(df['DateTime'], df['MMS_50'], label='MMS 50', linewidth=1, color='orange')
-    ax1.plot(df['DateTime'], df['MMS_200'], label='MMS 200', linewidth=1, color='red')
+    
+    colors = ['blue', 'orange', 'red']
+    for i, (col, window) in enumerate(zip(mms_cols, mms_windows)):
+        if col in df.columns:
+            label = f'MMS {minutes_to_human(window)}'
+            ax1.plot(df['DateTime'], df[col], label=label, linewidth=1, color=colors[i % 3])
+    
     ax1.set_title('Prix et Moyennes Mobiles Simples', fontsize=12, fontweight='bold')
     ax1.set_xlabel('Date')
     ax1.set_ylabel('Prix ($)')
@@ -116,7 +162,7 @@ def plot_indicators(df):
     ax1.grid(True, alpha=0.3)
     
     # 2. Tendances
-    print("📊 Graphique 2/5: Analyse de tendance...")
+    print("📊 Graphique 2/6: Analyse de tendance...")
     ax2 = plt.subplot(3, 2, 2)
     # Colorer selon la tendance
     tendance_colors = {'up': 'green', 'down': 'red', 'neutral': 'gray'}
@@ -132,11 +178,15 @@ def plot_indicators(df):
     ax2.grid(True, alpha=0.3)
     
     # 3. Écart-types (Volatilité)
-    print("📊 Graphique 3/5: Volatilité (écart-type)...")
+    print("📊 Graphique 3/6: Volatilité (écart-type)...")
     ax3 = plt.subplot(3, 2, 3)
-    ax3.plot(df['DateTime'], df['ECT_20'], label='ECT 20', linewidth=1, color='purple')
-    ax3.plot(df['DateTime'], df['ECT_50'], label='ECT 50', linewidth=1, color='orange')
-    ax3.plot(df['DateTime'], df['ECT_200'], label='ECT 200', linewidth=1, color='red')
+    
+    colors_ect = ['purple', 'orange', 'red']
+    for i, (col, window) in enumerate(zip(ect_cols, ect_windows)):
+        if col in df.columns:
+            label = f'ECT {minutes_to_human(window)}'
+            ax3.plot(df['DateTime'], df[col], label=label, linewidth=1, color=colors_ect[i % 3])
+    
     ax3.set_title('Volatilité (Écart-type glissant)', fontsize=12, fontweight='bold')
     ax3.set_xlabel('Date')
     ax3.set_ylabel('Écart-type ($)')
@@ -144,12 +194,13 @@ def plot_indicators(df):
     ax3.grid(True, alpha=0.3)
     
     # 4. Bandes de Bollinger
-    print("📊 Graphique 4/5: Bandes de Bollinger...")
+    print("📊 Graphique 4/6: Bandes de Bollinger...")
     ax4 = plt.subplot(3, 2, 4)
     ax4.plot(df['DateTime'], df['Close'], label='Close', linewidth=1.5, color='black', alpha=0.8)
     ax4.plot(df['DateTime'], df['Bollinger_Upper'], label='Bande supérieure', 
              linewidth=1, color='red', linestyle='--')
-    ax4.plot(df['DateTime'], df['Bollinger_Middle'], label='Bande médiane (MMS 20)', 
+    middle_label = f'Bande médiane (MMS {minutes_to_human(bollinger_window)})'
+    ax4.plot(df['DateTime'], df['Bollinger_Middle'], label=middle_label, 
              linewidth=1, color='blue')
     ax4.plot(df['DateTime'], df['Bollinger_Lower'], label='Bande inférieure', 
              linewidth=1, color='green', linestyle='--')
@@ -162,7 +213,7 @@ def plot_indicators(df):
     ax4.grid(True, alpha=0.3)
     
     # 5. Position dans les bandes de Bollinger
-    print("📊 Graphique 5/5: Position relative dans Bollinger...")
+    print("📊 Graphique 5/6: Position relative dans Bollinger...")
     ax5 = plt.subplot(3, 2, 5)
     ax5.plot(df['DateTime'], df['Bollinger_Position'], linewidth=1, color='purple')
     ax5.axhline(y=0.5, color='blue', linestyle='--', alpha=0.5, label='Médiane')
@@ -177,7 +228,7 @@ def plot_indicators(df):
     ax5.set_ylim(-0.1, 1.1)
     
     # 6. Niveaux de Fibonacci
-    print("📊 Graphique 6/5: Niveaux de retracement Fibonacci...")
+    print("📊 Graphique 6/6: Niveaux de retracement Fibonacci...")
     ax6 = plt.subplot(3, 2, 6)
     ax6.plot(df['DateTime'], df['Close'], label='Close', linewidth=1.5, color='black', alpha=0.8)
     
@@ -210,17 +261,24 @@ def plot_indicators(df):
 
 if __name__ == "__main__":
     try:
-        df = test_indicators()
+        # Permettre de choisir le preset via argument
+        preset = sys.argv[1] if len(sys.argv) > 1 else 'multi'
+        
+        df, config = test_indicators(preset=preset)
         
         # Afficher un aperçu des dernières lignes
-        print("\n" + "=" * 60)
+        print("\n" + "=" * 70)
         print("APERÇU DES DONNÉES (dernières lignes)")
-        print("=" * 60)
-        cols_to_show = ['DateTime', 'Close', 'MMS_20', 'Tendance', 'ECT_20', 'Bollinger_Position']
+        print("=" * 70)
+        
+        # Colonnes dynamiques basées sur le config
+        mms_col = f"MMS_{config['mms_windows'][0]}"
+        ect_col = f"ECT_{config['ect_windows'][0]}"
+        cols_to_show = ['DateTime', 'Close', mms_col, 'Tendance', ect_col, 'Bollinger_Position']
         print(df[cols_to_show].tail(10).to_string(index=False))
         
         # Créer les visualisations
-        plot_indicators(df)
+        plot_indicators(df, config)
         
         print("\n✅ Test et visualisation terminés avec succès !")
         
