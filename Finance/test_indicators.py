@@ -18,6 +18,11 @@ from Finance.ECT import add_ecart_type
 from Finance.Bollinger import add_bollinger
 from Finance.Fibonacci import add_fibonacci_levels
 from Finance.config import get_preset, minutes_to_human
+from Finance.MACD import calculate_macd
+from Finance.MME import calculate_mme
+from Finance.RSI import calculate_rsi
+from Finance.Volumes import analyze_volume
+from Finance.Ichimoku import calculate_ichimoku
 
 
 def test_indicators(preset: str = 'multi'):
@@ -40,17 +45,17 @@ def test_indicators(preset: str = 'multi'):
     if not parquet_path.exists():
         # Fallback sur SOL2021.parquet
         parquet_path = Path(__file__).parent.parent / "CryptoDataset" / "SOL2021.parquet"
-        print(f"   → Utilisation de SOL2021.parquet")
+        print(f"   -> Utilisation de SOL2021.parquet")
     else:
-        print(f"   → Utilisation de SOL_merged_2021_2024.parquet")
+        print(f"   -> Utilisation de SOL_merged_2021_2024.parquet")
     
     if not parquet_path.exists():
-        print(f"   ❌ Fichier non trouvé: {parquet_path}")
+        print(f"   [X] Fichier non trouvé: {parquet_path}")
         print("   Veuillez vérifier le chemin du fichier.")
         sys.exit(1)
     
     df = pd.read_parquet(parquet_path)
-    print(f"   ✓ DataFrame chargé: {len(df)} lignes, {len(df.columns)} colonnes")
+    print(f"   [OK] DataFrame chargé: {len(df)} lignes, {len(df.columns)} colonnes")
     
     # Prendre un échantillon pour la visualisation
     # Pour court terme : 3 jours = 4320 minutes
@@ -158,7 +163,7 @@ def plot_indicators(df, config):
     ax1.set_title('Prix et Moyennes Mobiles Simples', fontsize=12, fontweight='bold')
     ax1.set_xlabel('Date')
     ax1.set_ylabel('Prix ($)')
-    ax1.legend(loc='best')
+    ax1.legend(loc='best', fontsize=8)
     ax1.grid(True, alpha=0.3)
     
     # 2. Tendances
@@ -172,9 +177,8 @@ def plot_indicators(df, config):
             ax2.scatter(df.loc[mask, 'DateTime'], df.loc[mask, 'Close'], 
                        label=f'Tendance {tendance}', color=color, alpha=0.6, s=10)
     ax2.set_title('Analyse de Tendance (basée sur MMS)', fontsize=12, fontweight='bold')
-    ax2.set_xlabel('Date')
     ax2.set_ylabel('Prix ($)')
-    ax2.legend(loc='best')
+    ax2.legend(loc='best', fontsize=8)
     ax2.grid(True, alpha=0.3)
     
     # 3. Écart-types (Volatilité)
@@ -188,9 +192,8 @@ def plot_indicators(df, config):
             ax3.plot(df['DateTime'], df[col], label=label, linewidth=1, color=colors_ect[i % 3])
     
     ax3.set_title('Volatilité (Écart-type glissant)', fontsize=12, fontweight='bold')
-    ax3.set_xlabel('Date')
     ax3.set_ylabel('Écart-type ($)')
-    ax3.legend(loc='best')
+    ax3.legend(loc='best', fontsize=8)
     ax3.grid(True, alpha=0.3)
     
     # 4. Bandes de Bollinger
@@ -207,44 +210,85 @@ def plot_indicators(df, config):
     ax4.fill_between(df['DateTime'], df['Bollinger_Lower'], df['Bollinger_Upper'], 
                      alpha=0.1, color='gray')
     ax4.set_title('Bandes de Bollinger', fontsize=12, fontweight='bold')
-    ax4.set_xlabel('Date')
     ax4.set_ylabel('Prix ($)')
-    ax4.legend(loc='best')
+    ax4.legend(loc='best', fontsize=8)
     ax4.grid(True, alpha=0.3)
     
     # 5. Position dans les bandes de Bollinger
     print("📊 Graphique 5/6: Position relative dans Bollinger...")
     ax5 = plt.subplot(3, 2, 5)
     ax5.plot(df['DateTime'], df['Bollinger_Position'], linewidth=1, color='purple')
-    ax5.axhline(y=0.5, color='blue', linestyle='--', alpha=0.5, label='Médiane')
-    ax5.axhline(y=0, color='green', linestyle='--', alpha=0.3, label='Bande inférieure')
-    ax5.axhline(y=1, color='red', linestyle='--', alpha=0.3, label='Bande supérieure')
-    ax5.fill_between(df['DateTime'], 0, 1, alpha=0.05, color='gray')
-    ax5.set_title('Position relative dans les Bandes de Bollinger', fontsize=12, fontweight='bold')
-    ax5.set_xlabel('Date')
-    ax5.set_ylabel('Position (0=bas, 1=haut)')
-    ax5.legend(loc='best')
+    ax5.axhline(y=0.5, color='blue', linestyle='--', alpha=0.5)
+    ax5.axhline(y=0, color='green', linestyle='--', alpha=0.3)
+    ax5.axhline(y=1, color='red', linestyle='--', alpha=0.3)
+    ax5.set_title('Position relative Bollinger', fontsize=12, fontweight='bold')
+    ax5.set_ylabel('Position')
     ax5.grid(True, alpha=0.3)
-    ax5.set_ylim(-0.1, 1.1)
     
     # 6. Niveaux de Fibonacci
     print("📊 Graphique 6/6: Niveaux de retracement Fibonacci...")
     ax6 = plt.subplot(3, 2, 6)
     ax6.plot(df['DateTime'], df['Close'], label='Close', linewidth=1.5, color='black', alpha=0.8)
-    
-    # Tracer les niveaux de Fibonacci
     fib_levels = ['Fib_0_236', 'Fib_0_382', 'Fib_0_5', 'Fib_0_618', 'Fib_0_786']
     fib_colors = ['#FF6B6B', '#FFA07A', '#FFD700', '#90EE90', '#4169E1']
-    
     for level, color in zip(fib_levels, fib_colors):
         ax6.plot(df['DateTime'], df[level], label=level.replace('_', '.'), 
                 linewidth=1, linestyle='--', color=color, alpha=0.7)
-    
-    ax6.set_title('Niveaux de Retracement de Fibonacci', fontsize=12, fontweight='bold')
-    ax6.set_xlabel('Date')
+    ax6.set_title('Niveaux Fibonacci', fontsize=12, fontweight='bold')
     ax6.set_ylabel('Prix ($)')
     ax6.legend(loc='best', fontsize=8)
     ax6.grid(True, alpha=0.3)
+
+    # 7. MACD
+    print("[PLOT] Graphique 7/10: MACD...")
+    ax7 = plt.subplot(5, 2, 7, sharex=ax1)
+    ax7.plot(df['DateTime'], df['MACD_Line'], label='MACD', color='blue', linewidth=1.5)
+    ax7.plot(df['DateTime'], df['Signal_Line'], label='Signal', color='orange', linewidth=1.5)
+    ax7.bar(df['DateTime'], df['MACD_Hist'], label='Hist', color='gray', alpha=0.3)
+    ax7.set_title('MACD', fontsize=12, fontweight='bold')
+    ax7.legend(loc='best', fontsize=8)
+    ax7.grid(True, alpha=0.3)
+
+    # 8. RSI
+    print("[PLOT] Graphique 8/10: RSI...")
+    ax8 = plt.subplot(5, 2, 8, sharex=ax1)
+    ax8.plot(df['DateTime'], df['RSI_14'], label='RSI 14', color='purple', linewidth=1.5)
+    ax8.axhline(y=70, color='red', linestyle='--', alpha=0.5)
+    ax8.axhline(y=30, color='green', linestyle='--', alpha=0.5)
+    ax8.fill_between(df['DateTime'], 30, 70, color='gray', alpha=0.1)
+    ax8.set_title('RSI (14)', fontsize=12, fontweight='bold')
+    ax8.set_ylim(0, 100)
+    ax8.legend(loc='best', fontsize=8)
+    ax8.grid(True, alpha=0.3)
+
+    # 9. Volumes
+    print("[PLOT] Graphique 9/10: Volumes...")
+    ax9 = plt.subplot(5, 2, 9, sharex=ax1)
+    ax9.bar(df['DateTime'], df['Volume'], label='Volume', color='gray', alpha=0.5)
+    ax9.plot(df['DateTime'], df['Volume_SMA_20'], label='SMA 20', color='blue', linewidth=1)
+    # Highlight surges
+    surge_mask = df['Volume_Surge']
+    if surge_mask.any():
+        ax9.scatter(df.loc[surge_mask, 'DateTime'], df.loc[surge_mask, 'Volume'], 
+                   color='red', label='Surge', zorder=5, s=10)
+    ax9.set_title('Volumes', fontsize=12, fontweight='bold')
+    ax9.set_ylabel('Volume')
+    ax9.legend(loc='best', fontsize=8)
+    ax9.grid(True, alpha=0.3)
+
+    # 10. Ichimoku
+    print("[PLOT] Graphique 10/10: Ichimoku...")
+    ax10 = plt.subplot(5, 2, 10, sharex=ax1)
+    ax10.plot(df['DateTime'], df['Close'], label='Close', color='black', alpha=0.5, linewidth=1)
+    ax10.plot(df['DateTime'], df['Tenkan_Sen'], label='Tenkan', color='blue', linewidth=1)
+    ax10.plot(df['DateTime'], df['Kijun_Sen'], label='Kijun', color='red', linewidth=1)
+    # Cloud
+    ax10.fill_between(df['DateTime'], df['Senkou_Span_A'], df['Senkou_Span_B'], 
+                      color='green', alpha=0.2, label='Cloud')
+    ax10.set_title('Ichimoku', fontsize=12, fontweight='bold')
+    ax10.set_ylabel('Prix ($)')
+    ax10.legend(loc='best', fontsize=8)
+    ax10.grid(True, alpha=0.3)
     
     # Ajuster l'espacement
     plt.tight_layout()
@@ -252,10 +296,10 @@ def plot_indicators(df, config):
     # Sauvegarder
     output_path = Path(__file__).parent / "indicators_visualization.png"
     plt.savefig(output_path, dpi=150, bbox_inches='tight')
-    print(f"\n💾 Graphiques sauvegardés: {output_path}")
+    print(f"\n[SAVE] Graphiques sauvegardés: {output_path}")
     
     # Afficher
-    print("📊 Affichage des graphiques...")
+    print("[PLOT] Affichage des graphiques...")
     plt.show()
 
 
@@ -280,10 +324,10 @@ if __name__ == "__main__":
         # Créer les visualisations
         plot_indicators(df, config)
         
-        print("\n✅ Test et visualisation terminés avec succès !")
+        print("\n[SUCCESS] Test et visualisation terminés avec succès !")
         
     except Exception as e:
-        print(f"\n❌ Erreur lors du test: {e}")
+        print(f"\n[X] Erreur lors du test: {e}")
         import traceback
         traceback.print_exc()
         sys.exit(1)
