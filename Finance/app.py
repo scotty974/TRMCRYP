@@ -19,6 +19,11 @@ from Finance.Tendance import add_tendance
 from Finance.ECT import add_ecart_type
 from Finance.Bollinger import add_bollinger
 from Finance.Fibonacci import add_fibonacci_levels
+from Finance.MME import calculate_mme
+from Finance.MACD import calculate_macd
+from Finance.RSI import calculate_rsi
+from Finance.Volumes import analyze_volume
+from Finance.Ichimoku import calculate_ichimoku
 from Finance.config import get_preset, list_presets, minutes_to_human
 
 
@@ -88,6 +93,34 @@ def enrich_dataframe(
     print("  → Ajout des niveaux de Fibonacci...")
     df = add_fibonacci_levels(df, price_col=price_col, window=fibonacci_window, 
                              add_distance=True)
+    
+    # 6. Ajouter la moyenne mobile exponentielle (Tom)
+    print("  → Ajout de la MME...")
+    df = calculate_mme(df, window=mms_windows[0])
+    
+    # 7. Ajouter le MACD (Tom)
+    print("  → Ajout du MACD...")
+    # Adapter les fenêtres au preset
+    if preset == 'short':
+        fast, slow, signal = 12, 26, 9
+    elif preset == 'medium':
+        fast, slow, signal = 12*60, 26*60, 9*60
+    else:
+        fast, slow, signal = 12*60, 26*60, 9*60
+    df = calculate_macd(df, fast=fast, slow=slow, signal=signal)
+    
+    # 8. Ajouter le RSI (Tom)
+    print("  → Ajout du RSI...")
+    rsi_window = 14 if preset == 'short' else 14*60
+    df = calculate_rsi(df, window=rsi_window)
+    
+    # 9. Ajouter l'analyse des volumes (Tom)
+    print("  → Ajout de l'analyse des volumes...")
+    df = analyze_volume(df, window=mms_windows[0])
+    
+    # 10. Ajouter le nuage d'Ichimoku (Tom)
+    print("  → Ajout du nuage d'Ichimoku...")
+    df = calculate_ichimoku(df)
     
     print("✓ Enrichissement terminé !")
     return df

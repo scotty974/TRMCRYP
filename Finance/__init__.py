@@ -21,15 +21,26 @@ from Finance.Tendance import add_tendance, process_parquet_tendance
 from Finance.ECT import add_ecart_type, process_parquet_ect
 from Finance.Bollinger import add_bollinger, process_parquet_bollinger
 from Finance.Fibonacci import add_fibonacci_levels, process_parquet_fibonacci
+from Finance.MME import calculate_mme
+from Finance.MACD import calculate_macd
+from Finance.RSI import calculate_rsi
+from Finance.Volumes import analyze_volume
+from Finance.Ichimoku import calculate_ichimoku
 from Finance.config import get_preset, list_presets, TIMEFRAME_PRESETS, minutes_to_human
 
 __all__ = [
-    # Fonctions d'indicateurs
+    # Fonctions d'indicateurs (Aymeric)
     'add_mms',
     'add_tendance',
     'add_ecart_type',
     'add_bollinger',
     'add_fibonacci_levels',
+    # Fonctions d'indicateurs (Tom)
+    'calculate_mme',
+    'calculate_macd',
+    'calculate_rsi',
+    'analyze_volume',
+    'calculate_ichimoku',
     # Fonctions de traitement parquet
     'process_parquet_mms',
     'process_parquet_tendance',

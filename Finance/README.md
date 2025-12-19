@@ -4,7 +4,9 @@ Module d'analyse technique pour les données de cryptomonnaies, implémentant le
 
 ## Indicateurs Implémentés
 
-### 1. Moyennes Mobiles Simples (MMS) - `MMS.py`
+### Indicateurs d'Aymeric
+
+#### 1. Moyennes Mobiles Simples (MMS) - `MMS.py`
 Calcule les moyennes mobiles simples sur différentes fenêtres temporelles.
 
 **Colonnes créées :** `MMS_20`, `MMS_50`, `MMS_200`
@@ -61,7 +63,7 @@ from Finance.Bollinger import add_bollinger
 df = add_bollinger(df, window=20, price_col="Close", n_std=2.0, add_position=True)
 ```
 
-### 5. Retracements de Fibonacci - `Fibonacci.py`
+#### 5. Retracements de Fibonacci - `Fibonacci.py`
 Calcule les niveaux de retracement de Fibonacci pour identifier les zones de support/résistance.
 
 **Colonnes créées :** `Fib_0_236`, `Fib_0_382`, `Fib_0_5`, `Fib_0_618`, `Fib_0_786`, `Fib_Nearest_Distance`, `Fib_Nearest_Level`, `Fib_Position`
@@ -71,6 +73,68 @@ Calcule les niveaux de retracement de Fibonacci pour identifier les zones de sup
 from Finance.Fibonacci import add_fibonacci_levels
 
 df = add_fibonacci_levels(df, price_col="Close", window=None, add_distance=True)
+```
+
+### Indicateurs de Tom
+
+#### 6. Moyenne Mobile Exponentielle (MME) - `MME.py`
+Calcule la moyenne mobile exponentielle qui donne plus de poids aux données récentes.
+
+**Colonnes créées :** `MME_{window}`
+
+**Utilisation :**
+```python
+from Finance.MME import calculate_mme
+
+df = calculate_mme(df, window=20)
+```
+
+#### 7. MACD (Moving Average Convergence Divergence) - `MACD.py`
+Indicateur de momentum qui montre la relation entre deux moyennes mobiles.
+
+**Colonnes créées :** `MACD_Line`, `Signal_Line`, `MACD_Hist`
+
+**Utilisation :**
+```python
+from Finance.MACD import calculate_macd
+
+df = calculate_macd(df, fast=12, slow=26, signal=9)
+```
+
+#### 8. RSI (Relative Strength Index) - `RSI.py`
+Mesure la force relative du momentum des prix (suracheté > 70, survendu < 30).
+
+**Colonnes créées :** `RSI_{window}`
+
+**Utilisation :**
+```python
+from Finance.RSI import calculate_rsi
+
+df = calculate_rsi(df, window=14)
+```
+
+#### 9. Analyse des Volumes - `Volumes.py`
+Analyse les volumes de trading et identifie les pics de volume.
+
+**Colonnes créées :** `Volume_SMA_{window}`, `Volume_Surge`
+
+**Utilisation :**
+```python
+from Finance.Volumes import analyze_volume
+
+df = analyze_volume(df, window=20)
+```
+
+#### 10. Nuage d'Ichimoku - `Ichimoku.py`
+Système complet d'analyse technique japonais (Tenkan, Kijun, Senkou Span A & B).
+
+**Colonnes créées :** `Tenkan_Sen`, `Kijun_Sen`, `Senkou_Span_A`, `Senkou_Span_B`
+
+**Utilisation :**
+```python
+from Finance.Ichimoku import calculate_ichimoku
+
+df = calculate_ichimoku(df)
 ```
 
 ## Configuration des Fenêtres Temporelles
@@ -192,14 +256,20 @@ df.to_parquet("output_enhanced.parquet", index=False)
 Finance/
 ├── __init__.py           # Package principal
 ├── config.py            # Configuration des presets de fenêtres temporelles
-├── MMS.py               # Moyennes mobiles simples
-├── Tendance.py          # Analyse de tendance
-├── ECT.py               # Écart-type (volatilité)
-├── Bollinger.py         # Bandes de Bollinger
-├── Fibonacci.py         # Retracements de Fibonacci
+├── MMS.py               # Moyennes mobiles simples (Aymeric)
+├── Tendance.py          # Analyse de tendance (Aymeric)
+├── ECT.py               # Écart-type / volatilité (Aymeric)
+├── Bollinger.py         # Bandes de Bollinger (Aymeric)
+├── Fibonacci.py         # Retracements de Fibonacci (Aymeric)
+├── MME.py               # Moyenne mobile exponentielle (Tom)
+├── MACD.py              # MACD (Tom)
+├── RSI.py               # RSI (Tom)
+├── Volumes.py           # Analyse des volumes (Tom)
+├── Ichimoku.py          # Nuage d'Ichimoku (Tom)
 ├── app.py               # Script orchestrateur avec presets
 ├── test_indicators.py   # Tests avec visualisations
-└── README.md            # Cette documentation
+├── README.md            # Documentation complète
+└── GUIDE_DEMARRAGE.md   # Guide de démarrage rapide
 ```
 
 ## Dépendances

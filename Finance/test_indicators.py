@@ -120,6 +120,40 @@ def test_indicators(preset: str = 'multi'):
                                     window=fibonacci_window, add_distance=True)
     print(f"   ✓ Colonnes ajoutées: Fib_0_236, Fib_0_382, Fib_0_5, Fib_0_618, Fib_0_786")
     
+    # Test MME (Tom)
+    print("\n7. Test de la moyenne mobile exponentielle (MME)...")
+    df_sample = calculate_mme(df_sample, window=mms_windows[0])
+    print(f"   ✓ Colonne ajoutée: MME_{mms_windows[0]}")
+    
+    # Test MACD (Tom)
+    print("\n8. Test du MACD...")
+    # Adapter les fenêtres au preset pour données 1m
+    if preset == 'short':
+        fast, slow, signal = 12, 26, 9  # Court terme
+    elif preset == 'medium':
+        fast, slow, signal = 12*60, 26*60, 9*60  # Moyen terme (en heures)
+    else:
+        fast, slow, signal = 12*60, 26*60, 9*60  # Multi/long terme
+    
+    df_sample = calculate_macd(df_sample, fast=fast, slow=slow, signal=signal)
+    print(f"   ✓ Colonnes ajoutées: MACD_Line, Signal_Line, MACD_Hist")
+    
+    # Test RSI (Tom)
+    print("\n9. Test du RSI...")
+    rsi_window = 14 if preset == 'short' else 14*60  # Adapter au preset
+    df_sample = calculate_rsi(df_sample, window=rsi_window)
+    print(f"   ✓ Colonne ajoutée: RSI_{rsi_window}")
+    
+    # Test Volumes (Tom)
+    print("\n10. Test de l'analyse des volumes...")
+    df_sample = analyze_volume(df_sample, window=mms_windows[0])
+    print(f"   ✓ Colonnes ajoutées: Volume_SMA_{mms_windows[0]}, Volume_Surge")
+    
+    # Test Ichimoku (Tom)
+    print("\n11. Test du nuage d'Ichimoku...")
+    df_sample = calculate_ichimoku(df_sample)
+    print(f"   ✓ Colonnes ajoutées: Tenkan_Sen, Kijun_Sen, Senkou_Span_A, Senkou_Span_B")
+    
     # Résumé final
     print("\n" + "=" * 70)
     print("RÉSUMÉ")
@@ -130,7 +164,7 @@ def test_indicators(preset: str = 'multi'):
     return df_sample, config
 
 
-def plot_indicators(df, config):
+def plot_indicators(df, config, preset='multi'):
     """Crée des visualisations pour tous les indicateurs."""
     print("\n" + "=" * 70)
     print("CRÉATION DES VISUALISATIONS")
@@ -138,7 +172,7 @@ def plot_indicators(df, config):
     
     # Configuration de matplotlib
     plt.style.use('seaborn-v0_8-darkgrid')
-    fig = plt.figure(figsize=(16, 12))
+    fig = plt.figure(figsize=(20, 16))
     
     # Récupérer les fenêtres du config
     mms_windows = config['mms_windows']
@@ -149,9 +183,13 @@ def plot_indicators(df, config):
     mms_cols = [f'MMS_{w}' for w in mms_windows]
     ect_cols = [f'ECT_{w}' for w in ect_windows]
     
+    # Calculer quelle fenêtre RSI a été utilisée
+    rsi_window = 14 if preset == 'short' else 14*60
+    rsi_col = f'RSI_{rsi_window}'
+    
     # 1. Prix et Moyennes Mobiles Simples
-    print("\n📊 Graphique 1/6: Prix et MMS...")
-    ax1 = plt.subplot(3, 2, 1)
+    print("\n📊 Graphique 1/10: Prix et MMS...")
+    ax1 = plt.subplot(5, 2, 1)
     ax1.plot(df['DateTime'], df['Close'], label='Close', linewidth=1.5, color='black', alpha=0.7)
     
     colors = ['blue', 'orange', 'red']
@@ -167,8 +205,8 @@ def plot_indicators(df, config):
     ax1.grid(True, alpha=0.3)
     
     # 2. Tendances
-    print("📊 Graphique 2/6: Analyse de tendance...")
-    ax2 = plt.subplot(3, 2, 2)
+    print("📊 Graphique 2/10: Analyse de tendance...")
+    ax2 = plt.subplot(5, 2, 2)
     # Colorer selon la tendance
     tendance_colors = {'up': 'green', 'down': 'red', 'neutral': 'gray'}
     for tendance, color in tendance_colors.items():
@@ -182,8 +220,8 @@ def plot_indicators(df, config):
     ax2.grid(True, alpha=0.3)
     
     # 3. Écart-types (Volatilité)
-    print("📊 Graphique 3/6: Volatilité (écart-type)...")
-    ax3 = plt.subplot(3, 2, 3)
+    print("📊 Graphique 3/10: Volatilité (écart-type)...")
+    ax3 = plt.subplot(5, 2, 3)
     
     colors_ect = ['purple', 'orange', 'red']
     for i, (col, window) in enumerate(zip(ect_cols, ect_windows)):
@@ -197,8 +235,8 @@ def plot_indicators(df, config):
     ax3.grid(True, alpha=0.3)
     
     # 4. Bandes de Bollinger
-    print("📊 Graphique 4/6: Bandes de Bollinger...")
-    ax4 = plt.subplot(3, 2, 4)
+    print("📊 Graphique 4/10: Bandes de Bollinger...")
+    ax4 = plt.subplot(5, 2, 4)
     ax4.plot(df['DateTime'], df['Close'], label='Close', linewidth=1.5, color='black', alpha=0.8)
     ax4.plot(df['DateTime'], df['Bollinger_Upper'], label='Bande supérieure', 
              linewidth=1, color='red', linestyle='--')
@@ -215,8 +253,8 @@ def plot_indicators(df, config):
     ax4.grid(True, alpha=0.3)
     
     # 5. Position dans les bandes de Bollinger
-    print("📊 Graphique 5/6: Position relative dans Bollinger...")
-    ax5 = plt.subplot(3, 2, 5)
+    print("📊 Graphique 5/10: Position relative dans Bollinger...")
+    ax5 = plt.subplot(5, 2, 5)
     ax5.plot(df['DateTime'], df['Bollinger_Position'], linewidth=1, color='purple')
     ax5.axhline(y=0.5, color='blue', linestyle='--', alpha=0.5)
     ax5.axhline(y=0, color='green', linestyle='--', alpha=0.3)
@@ -226,8 +264,8 @@ def plot_indicators(df, config):
     ax5.grid(True, alpha=0.3)
     
     # 6. Niveaux de Fibonacci
-    print("📊 Graphique 6/6: Niveaux de retracement Fibonacci...")
-    ax6 = plt.subplot(3, 2, 6)
+    print("📊 Graphique 6/10: Niveaux de retracement Fibonacci...")
+    ax6 = plt.subplot(5, 2, 6)
     ax6.plot(df['DateTime'], df['Close'], label='Close', linewidth=1.5, color='black', alpha=0.8)
     fib_levels = ['Fib_0_236', 'Fib_0_382', 'Fib_0_5', 'Fib_0_618', 'Fib_0_786']
     fib_colors = ['#FF6B6B', '#FFA07A', '#FFD700', '#90EE90', '#4169E1']
@@ -240,51 +278,64 @@ def plot_indicators(df, config):
     ax6.grid(True, alpha=0.3)
 
     # 7. MACD
-    print("[PLOT] Graphique 7/10: MACD...")
-    ax7 = plt.subplot(5, 2, 7, sharex=ax1)
+    print("📊 Graphique 7/10: MACD...")
+    ax7 = plt.subplot(5, 2, 7)
     ax7.plot(df['DateTime'], df['MACD_Line'], label='MACD', color='blue', linewidth=1.5)
     ax7.plot(df['DateTime'], df['Signal_Line'], label='Signal', color='orange', linewidth=1.5)
     ax7.bar(df['DateTime'], df['MACD_Hist'], label='Hist', color='gray', alpha=0.3)
     ax7.set_title('MACD', fontsize=12, fontweight='bold')
+    ax7.set_ylabel('MACD')
     ax7.legend(loc='best', fontsize=8)
     ax7.grid(True, alpha=0.3)
 
     # 8. RSI
-    print("[PLOT] Graphique 8/10: RSI...")
-    ax8 = plt.subplot(5, 2, 8, sharex=ax1)
-    ax8.plot(df['DateTime'], df['RSI_14'], label='RSI 14', color='purple', linewidth=1.5)
-    ax8.axhline(y=70, color='red', linestyle='--', alpha=0.5)
-    ax8.axhline(y=30, color='green', linestyle='--', alpha=0.5)
+    print("📊 Graphique 8/10: RSI...")
+    ax8 = plt.subplot(5, 2, 8)
+    # Utiliser le nom de colonne correct
+    if rsi_col in df.columns:
+        ax8.plot(df['DateTime'], df[rsi_col], label=f'RSI {rsi_window}', color='purple', linewidth=1.5)
+    ax8.axhline(y=70, color='red', linestyle='--', alpha=0.5, label='Suracheté')
+    ax8.axhline(y=30, color='green', linestyle='--', alpha=0.5, label='Survendu')
     ax8.fill_between(df['DateTime'], 30, 70, color='gray', alpha=0.1)
-    ax8.set_title('RSI (14)', fontsize=12, fontweight='bold')
+    ax8.set_title(f'RSI ({rsi_window})', fontsize=12, fontweight='bold')
     ax8.set_ylim(0, 100)
+    ax8.set_ylabel('RSI')
     ax8.legend(loc='best', fontsize=8)
     ax8.grid(True, alpha=0.3)
 
     # 9. Volumes
-    print("[PLOT] Graphique 9/10: Volumes...")
-    ax9 = plt.subplot(5, 2, 9, sharex=ax1)
+    print("📊 Graphique 9/10: Volumes...")
+    ax9 = plt.subplot(5, 2, 9)
     ax9.bar(df['DateTime'], df['Volume'], label='Volume', color='gray', alpha=0.5)
-    ax9.plot(df['DateTime'], df['Volume_SMA_20'], label='SMA 20', color='blue', linewidth=1)
+    # Trouver le nom de colonne volume SMA
+    volume_sma_col = f'Volume_SMA_{mms_windows[0]}'
+    if volume_sma_col in df.columns:
+        ax9.plot(df['DateTime'], df[volume_sma_col], label=f'SMA {minutes_to_human(mms_windows[0])}', 
+                color='blue', linewidth=1)
     # Highlight surges
-    surge_mask = df['Volume_Surge']
-    if surge_mask.any():
-        ax9.scatter(df.loc[surge_mask, 'DateTime'], df.loc[surge_mask, 'Volume'], 
-                   color='red', label='Surge', zorder=5, s=10)
+    if 'Volume_Surge' in df.columns:
+        surge_mask = df['Volume_Surge']
+        if surge_mask.any():
+            ax9.scatter(df.loc[surge_mask, 'DateTime'], df.loc[surge_mask, 'Volume'], 
+                       color='red', label='Pic', zorder=5, s=20)
     ax9.set_title('Volumes', fontsize=12, fontweight='bold')
     ax9.set_ylabel('Volume')
     ax9.legend(loc='best', fontsize=8)
     ax9.grid(True, alpha=0.3)
 
     # 10. Ichimoku
-    print("[PLOT] Graphique 10/10: Ichimoku...")
-    ax10 = plt.subplot(5, 2, 10, sharex=ax1)
+    print("📊 Graphique 10/10: Ichimoku...")
+    ax10 = plt.subplot(5, 2, 10)
     ax10.plot(df['DateTime'], df['Close'], label='Close', color='black', alpha=0.5, linewidth=1)
     ax10.plot(df['DateTime'], df['Tenkan_Sen'], label='Tenkan', color='blue', linewidth=1)
     ax10.plot(df['DateTime'], df['Kijun_Sen'], label='Kijun', color='red', linewidth=1)
     # Cloud
     ax10.fill_between(df['DateTime'], df['Senkou_Span_A'], df['Senkou_Span_B'], 
-                      color='green', alpha=0.2, label='Cloud')
+                      where=df['Senkou_Span_A'] >= df['Senkou_Span_B'], 
+                      color='green', alpha=0.2, interpolate=True)
+    ax10.fill_between(df['DateTime'], df['Senkou_Span_A'], df['Senkou_Span_B'], 
+                      where=df['Senkou_Span_A'] < df['Senkou_Span_B'], 
+                      color='red', alpha=0.2, interpolate=True)
     ax10.set_title('Ichimoku', fontsize=12, fontweight='bold')
     ax10.set_ylabel('Prix ($)')
     ax10.legend(loc='best', fontsize=8)
@@ -322,9 +373,9 @@ if __name__ == "__main__":
         print(df[cols_to_show].tail(10).to_string(index=False))
         
         # Créer les visualisations
-        plot_indicators(df, config)
+        plot_indicators(df, config, preset=preset)
         
-        print("\n[SUCCESS] Test et visualisation terminés avec succès !")
+        print("\n✅ Test et visualisation terminés avec succès !")
         
     except Exception as e:
         print(f"\n[X] Erreur lors du test: {e}")
