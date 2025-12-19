@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC ProcessedDataset - Aperçu des colonnes</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h1 {
+            margin: 0 0 10px 0;
+            font-size: 2em;
+        }
+        .stats {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(500px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+        .card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .card-header {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        .card-body {
+            padding: 0;
+        }
+        .card-body img {
+            width: 100%;
+            height: auto;
+            display: block;
+        }
+        .search-box {
+            margin-bottom: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .search-box input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .search-box input:focus {
+            outline: none;
+            border-color: #764ba2;
+        }
+        .no-results {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 BTC ProcessedDataset - Aperçu des colonnes</h1>
+            <div class="stats">
+                44 colonnes visualisées
+            </div>
+        </div>
+        
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Rechercher une colonne..." onkeyup="filterColumns()">
+        </div>
+        
+        <div class="grid" id="columnsGrid">
+
+            <div class="card" data-column="open_time">
+                <div class="card-header">Open_Time</div>
+                <div class="card-body">
+                    <img src="Open_Time.png" alt="Open_Time" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="open">
+                <div class="card-header">Open</div>
+                <div class="card-body">
+                    <img src="Open.png" alt="Open" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="high">
+                <div class="card-header">High</div>
+                <div class="card-body">
+                    <img src="High.png" alt="High" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="low">
+                <div class="card-header">Low</div>
+                <div class="card-body">
+                    <img src="Low.png" alt="Low" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="close">
+                <div class="card-header">Close</div>
+                <div class="card-body">
+                    <img src="Close.png" alt="Close" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="volume">
+                <div class="card-header">Volume</div>
+                <div class="card-body">
+                    <img src="Volume.png" alt="Volume" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="close_time">
+                <div class="card-header">close_time</div>
+                <div class="card-body">
+                    <img src="close_time.png" alt="close_time" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="quote_volume">
+                <div class="card-header">Quote_Volume</div>
+                <div class="card-body">
+                    <img src="Quote_Volume.png" alt="Quote_Volume" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="trades">
+                <div class="card-header">Trades</div>
+                <div class="card-body">
+                    <img src="Trades.png" alt="Trades" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="taker_buy_base">
+                <div class="card-header">Taker_Buy_Base</div>
+                <div class="card-body">
+                    <img src="Taker_Buy_Base.png" alt="Taker_Buy_Base" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="taker_buy_quote">
+                <div class="card-header">Taker_Buy_Quote</div>
+                <div class="card-body">
+                    <img src="Taker_Buy_Quote.png" alt="Taker_Buy_Quote" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="ret">
+                <div class="card-header">ret</div>
+                <div class="card-body">
+                    <img src="ret.png" alt="ret" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="log_ret">
+                <div class="card-header">log_ret</div>
+                <div class="card-body">
+                    <img src="log_ret.png" alt="log_ret" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_5">
+                <div class="card-header">rv_5</div>
+                <div class="card-body">
+                    <img src="rv_5.png" alt="rv_5" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_5">
+                <div class="card-header">rv_ann_5</div>
+                <div class="card-body">
+                    <img src="rv_ann_5.png" alt="rv_ann_5" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_15">
+                <div class="card-header">rv_15</div>
+                <div class="card-body">
+                    <img src="rv_15.png" alt="rv_15" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_15">
+                <div class="card-header">rv_ann_15</div>
+                <div class="card-body">
+                    <img src="rv_ann_15.png" alt="rv_ann_15" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_30">
+                <div class="card-header">rv_30</div>
+                <div class="card-body">
+                    <img src="rv_30.png" alt="rv_30" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_30">
+                <div class="card-header">rv_ann_30</div>
+                <div class="card-body">
+                    <img src="rv_ann_30.png" alt="rv_ann_30" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_60">
+                <div class="card-header">rv_60</div>
+                <div class="card-body">
+                    <img src="rv_60.png" alt="rv_60" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_60">
+                <div class="card-header">rv_ann_60</div>
+                <div class="card-body">
+                    <img src="rv_ann_60.png" alt="rv_ann_60" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_120">
+                <div class="card-header">rv_120</div>
+                <div class="card-body">
+                    <img src="rv_120.png" alt="rv_120" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_120">
+                <div class="card-header">rv_ann_120</div>
+                <div class="card-body">
+                    <img src="rv_ann_120.png" alt="rv_ann_120" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_240">
+                <div class="card-header">rv_240</div>
+                <div class="card-body">
+                    <img src="rv_240.png" alt="rv_240" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_240">
+                <div class="card-header">rv_ann_240</div>
+                <div class="card-body">
+                    <img src="rv_ann_240.png" alt="rv_ann_240" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_720">
+                <div class="card-header">rv_720</div>
+                <div class="card-body">
+                    <img src="rv_720.png" alt="rv_720" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_720">
+                <div class="card-header">rv_ann_720</div>
+                <div class="card-body">
+                    <img src="rv_ann_720.png" alt="rv_ann_720" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_1440">
+                <div class="card-header">rv_1440</div>
+                <div class="card-body">
+                    <img src="rv_1440.png" alt="rv_1440" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rv_ann_1440">
+                <div class="card-header">rv_ann_1440</div>
+                <div class="card-body">
+                    <img src="rv_ann_1440.png" alt="rv_ann_1440" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="ema_20">
+                <div class="card-header">ema_20</div>
+                <div class="card-body">
+                    <img src="ema_20.png" alt="ema_20" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="dist_ema_20">
+                <div class="card-header">dist_ema_20</div>
+                <div class="card-body">
+                    <img src="dist_ema_20.png" alt="dist_ema_20" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="ema_50">
+                <div class="card-header">ema_50</div>
+                <div class="card-body">
+                    <img src="ema_50.png" alt="ema_50" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="dist_ema_50">
+                <div class="card-header">dist_ema_50</div>
+                <div class="card-body">
+                    <img src="dist_ema_50.png" alt="dist_ema_50" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="ema_100">
+                <div class="card-header">ema_100</div>
+                <div class="card-body">
+                    <img src="ema_100.png" alt="ema_100" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="dist_ema_100">
+                <div class="card-header">dist_ema_100</div>
+                <div class="card-body">
+                    <img src="dist_ema_100.png" alt="dist_ema_100" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="ema_200">
+                <div class="card-header">ema_200</div>
+                <div class="card-body">
+                    <img src="ema_200.png" alt="ema_200" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="dist_ema_200">
+                <div class="card-header">dist_ema_200</div>
+                <div class="card-body">
+                    <img src="dist_ema_200.png" alt="dist_ema_200" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="atr_14">
+                <div class="card-header">atr_14</div>
+                <div class="card-body">
+                    <img src="atr_14.png" alt="atr_14" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="atr_pct_14">
+                <div class="card-header">atr_pct_14</div>
+                <div class="card-body">
+                    <img src="atr_pct_14.png" alt="atr_pct_14" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="rsi_14">
+                <div class="card-header">rsi_14</div>
+                <div class="card-body">
+                    <img src="rsi_14.png" alt="rsi_14" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="var_99_60">
+                <div class="card-header">var_99_60</div>
+                <div class="card-body">
+                    <img src="var_99_60.png" alt="var_99_60" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="cvar_99_60">
+                <div class="card-header">cvar_99_60</div>
+                <div class="card-body">
+                    <img src="cvar_99_60.png" alt="cvar_99_60" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="var_99_240">
+                <div class="card-header">var_99_240</div>
+                <div class="card-body">
+                    <img src="var_99_240.png" alt="var_99_240" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="cvar_99_240">
+                <div class="card-header">cvar_99_240</div>
+                <div class="card-body">
+                    <img src="cvar_99_240.png" alt="cvar_99_240" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="var_99_1440">
+                <div class="card-header">var_99_1440</div>
+                <div class="card-body">
+                    <img src="var_99_1440.png" alt="var_99_1440" loading="lazy">
+                </div>
+            </div>
+
+            <div class="card" data-column="cvar_99_1440">
+                <div class="card-header">cvar_99_1440</div>
+                <div class="card-body">
+                    <img src="cvar_99_1440.png" alt="cvar_99_1440" loading="lazy">
+                </div>
+            </div>
+
+        </div>
+        <div class="no-results" id="noResults" style="display: none;">
+            Aucune colonne ne correspond à votre recherche.
+        </div>
+    </div>
+    
+    <script>
+        function filterColumns() {
+            const input = document.getElementById('searchInput');
+            const filter = input.value.toLowerCase();
+            const grid = document.getElementById('columnsGrid');
+            const cards = grid.getElementsByClassName('card');
+            const noResults = document.getElementById('noResults');
+            let visibleCount = 0;
+            
+            for (let i = 0; i < cards.length; i++) {
+                const column = cards[i].getAttribute('data-column');
+                if (column.includes(filter)) {
+                    cards[i].style.display = '';
+                    visibleCount++;
+                } else {
+                    cards[i].style.display = 'none';
+                }
+            }
+            
+            if (visibleCount === 0) {
+                grid.style.display = 'none';
+                noResults.style.display = 'block';
+            } else {
+                grid.style.display = 'grid';
+                noResults.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

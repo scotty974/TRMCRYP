@@ -3,3 +3,5 @@ Finance/__pycache__/
 uv.lock
 .python-version
 .venv/
+BTC_ProcessedDataset/2*
+BTC_ProcessedDataset/*.parquet
